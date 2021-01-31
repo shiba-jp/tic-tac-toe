@@ -1,0 +1,22 @@
+{
+    "image2": {
+        "data": "hwQQABAAAAAAAAAAAAAAAAAAAAAAAAAAAA8AAAAA8AAA8AAAAAAPAAAADwAA8AAAAADwAAAPAAAAAAAP8AAAAAAAAPAPAAAAAAAA8A8AAAAAAAAP8AAAAAAA8AAADwAAAAAPAADwAAAA8AAAAAAPAAAPAAAAAPAAAAAAAAAAAAAAAAAAAAAAAA==",
+        "mimeType": "image/x-mkcd-f4",
+        "displayName": "batsu"
+    },
+    "image1": {
+        "data": "hwQQABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//8AAAAAAP8P8P8AAADwDwAA8A8AAPAAAAAADwAA/wAAAAD/AAAPAAAAAPAAAA8AAAAA8AAA/wAAAAD/AADwAAAAAA8AAPAPAADwDwAAAP8P8P8AAAAAAP//AAAAAAAAAAAAAAAAAAAAAAAAAA==",
+        "mimeType": "image/x-mkcd-f4",
+        "displayName": "maru"
+    },
+    "image3": {
+        "data": "hwQQABAAAAAiIiIiIiIiIgIAAAAAAAAgAgAAAAAAACACAAAAAAAAIAIAAAAAAAAgAgAAAAAAACACAAAAAAAAIAIAAAAAAAAgAgAAAAAAACACAAAAAAAAIAIAAAAAAAAgAgAAAAAAACACAAAAAAAAIAIAAAAAAAAgAgAAAAAAACAiIiIiIiIiIg==",
+        "mimeType": "image/x-mkcd-f4",
+        "displayName": "cursor"
+    },
+    "*": {
+        "mimeType": "image/x-mkcd-f4",
+        "dataEncoding": "base64",
+        "namespace": "myImages"
+    }
+}
