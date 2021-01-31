@@ -21,7 +21,7 @@ moveSprite(cursor, curosrPlaceNo)
 
 let statusMap: number[] = []
 for(let i = 0; i  < 9; i++) {
-    statusMap[i] = null
+    statusMap[i] = 0
 }
 
 let isPlayerFirst = randint(0, 1) == 0 ? true : false
@@ -35,13 +35,15 @@ if(isPlayerFirst) {
 }
 
 function playerTurn() {
-    if(statusMap[curosrPlaceNo] != null) return
+    if(statusMap[curosrPlaceNo] != 0) return
 
     let mySprite = sprites.create(assets.image`maru`)
     moveSprite(mySprite, curosrPlaceNo)
-    statusMap[curosrPlaceNo] = isPlayerFirst ? 0 : 1
+    statusMap[curosrPlaceNo] = 1
 
     console.log(statusMap)
+
+    judge()
 
     cpuTurn()
 }
@@ -50,8 +52,39 @@ function cpuTurn() {
     currentScene = GameScene.CpuTurn
 
     pause(1000)
+    judge()
 
     currentScene = GameScene.PlayerTurn
+}
+
+function gameOver(win: boolean) {
+    game.over(win)
+}
+
+function judge(){
+    pause(300)
+
+    if(statusMap[0]+statusMap[3]+statusMap[6] == 3
+    || statusMap[1]+statusMap[4]+statusMap[7] == 3
+    || statusMap[2]+statusMap[5]+statusMap[8] == 3
+    || statusMap[0]+statusMap[1]+statusMap[2] == 3
+    || statusMap[3]+statusMap[4]+statusMap[5] == 3
+    || statusMap[6]+statusMap[7]+statusMap[8] == 3
+    || statusMap[0]+statusMap[4]+statusMap[8] == 3
+    || statusMap[2]+statusMap[4]+statusMap[6] == 3) {
+        gameOver(true)
+    }
+
+    if(statusMap[0]+statusMap[3]+statusMap[6] == 30
+    || statusMap[1]+statusMap[4]+statusMap[7] == 30
+    || statusMap[2]+statusMap[5]+statusMap[8] == 30
+    || statusMap[0]+statusMap[1]+statusMap[2] == 30
+    || statusMap[3]+statusMap[4]+statusMap[5] == 30
+    || statusMap[6]+statusMap[7]+statusMap[8] == 30
+    || statusMap[0]+statusMap[4]+statusMap[8] == 30
+    || statusMap[2]+statusMap[4]+statusMap[6] == 30) {
+        gameOver(false)
+    }
 }
 
 function moveSprite(target: Sprite, place: number) {
