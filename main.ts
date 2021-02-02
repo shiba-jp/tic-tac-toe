@@ -50,29 +50,56 @@ function playerTurn() {
 function cpuTurn() {
     currentScene = GameScene.CpuTurn
 
-    let workMap = statusMap.slice(0, statusMap.length - 1)
-    let pos: number
-    for(let i = 0; i < statusMap.length; i++) {
-        if(statusMap[i] != 0) continue
-
-        workMap[i] = isPlayerFirst ? 2 : 1
-
-        let val = minMax(workMap, !isPlayerFirst)
-
-        if(!isPlayerFirst && val == 10) {
-            pos = i
-            break
-        }else if(isPlayerFirst && val == -10) {
-            pos = 1
-            break
-        }
-    }
+    let pos: number = negaMaxNextAction(!isPlayerFirst)
 
     let mySprite = sprites.create(!isPlayerFirst ? assets.image`batsu` : assets.image`maru`)
-    moveSprite(mySprite, pos)
+    moveCpuSprite(mySprite, pos)
     statusMap[pos] = isPlayerFirst ? 2 : 1
 
     currentScene = GameScene.PlayerTurn
+}
+
+function negaMax(workMap: number[], firstMove: boolean): number {
+    let status: Status = judge(workMap)
+    if(status != Status.InAMatch) {
+        return evaluate(status, firstMove)
+    }
+
+    let bestScore: number = -99
+
+    for(let i = 0; i < workMap.length; i++) {
+        if(workMap[i] != 0) continue
+        workMap[i] = firstMove ? 1 : 2
+
+        let score = -negaMax(workMap, !firstMove)
+
+        if(score > bestScore) {
+            bestScore = score
+        }
+    }
+
+    return bestScore
+}
+
+function negaMaxNextAction(firstMove: boolean): number {
+    let bestScore: number = -99
+    let bestAction: number = -99
+
+    for(let i = 0; i < statusMap.length; i++) {
+        if(statusMap[i] != 0) continue
+
+        let workMap = statusMap.slice(0, statusMap.length - 1)
+        workMap[i] = firstMove ? 1 : 2
+
+        let score = -negaMax(workMap, !firstMove)
+
+        if(score > bestScore) {
+            bestAction = i
+            bestScore = score
+        }
+    }
+
+    return bestAction
 }
 
 function minMax(workMap: number[], firstMove: boolean) {
@@ -106,13 +133,13 @@ function gameOver(win: boolean) {
 
 function evaluate(status: Status, firstMove: boolean): number {
     if(firstMove && status == Status.FirstWin) {
-        return 10
+        return 1
     }else if(firstMove && status == Status.SecondWin) {
-        return -10
+        return -1
     }else if(!firstMove && status == Status.FirstWin) {
-        return -10
+        return -1
     }else if(!firstMove && status == Status.SecondWin) {
-        return 10
+        return 1
     }else{
         return 0
     }
@@ -153,6 +180,16 @@ function moveSprite(target: Sprite, place: number) {
 
     target.setPosition(x, y)
     curosrPlaceNo = place
+}
+
+function moveCpuSprite(target: Sprite, place: number) {
+    let col = place % 3
+    let row = Math.floor(place / 3)
+    
+    let x = 16 * col + 8
+    let y = 16 * row + 8
+
+    target.setPosition(x, y)
 }
 
 controller.A.onEvent(ControllerButtonEvent.Pressed, function() {
