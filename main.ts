@@ -8,8 +8,9 @@ enum GameScene {
 
 enum Status {
     InAMatch = 0,
-    PlayerWin = 1,
-    CpuWin = 2,
+    FirstWin = 1,
+    SecondWin = 2,
+    Draw = 3,
 }
 
 let currentScene: GameScene = GameScene.Init
@@ -37,13 +38,11 @@ if(isPlayerFirst) {
 function playerTurn() {
     if(statusMap[curosrPlaceNo] != 0) return
 
-    let mySprite = sprites.create(assets.image`maru`)
+    let mySprite = sprites.create(isPlayerFirst ? assets.image`batsu` : assets.image`maru`)
     moveSprite(mySprite, curosrPlaceNo)
-    statusMap[curosrPlaceNo] = 1
+    statusMap[curosrPlaceNo] = isPlayerFirst ? 1 : 2
 
     console.log(statusMap)
-
-    judge()
 
     cpuTurn()
 }
@@ -51,39 +50,97 @@ function playerTurn() {
 function cpuTurn() {
     currentScene = GameScene.CpuTurn
 
-    pause(1000)
-    judge()
+    let workMap = statusMap.slice(0, statusMap.length - 1)
+    let pos: number
+    for(let i = 0; i < statusMap.length; i++) {
+        if(statusMap[i] != 0) continue
+
+        workMap[i] = isPlayerFirst ? 2 : 1
+
+        let val = minMax(workMap, !isPlayerFirst)
+
+        if(!isPlayerFirst && val == 10) {
+            pos = i
+            break
+        }else if(isPlayerFirst && val == -10) {
+            pos = 1
+            break
+        }
+    }
+
+    let mySprite = sprites.create(!isPlayerFirst ? assets.image`batsu` : assets.image`maru`)
+    moveSprite(mySprite, pos)
+    statusMap[pos] = isPlayerFirst ? 2 : 1
 
     currentScene = GameScene.PlayerTurn
+}
+
+function minMax(workMap: number[], firstMove: boolean) {
+    let status: Status = judge(workMap)
+    if(status != Status.InAMatch) {
+        return evaluate(status, firstMove)
+    }else {
+        let max: number = -99
+        let min: number = 99
+
+        for(let i = 0; i < workMap.length; i++) {
+            if(workMap[i] != 0) continue
+            workMap[i] = firstMove ? 1 : 2
+
+            let score = minMax(workMap, !firstMove)
+
+            if(firstMove) {
+                if(score > max) max = score
+            }else{
+                if(score < min) min = score
+            }
+        }
+
+        return firstMove ? max : min
+    }
 }
 
 function gameOver(win: boolean) {
     game.over(win)
 }
 
-function judge(){
-    pause(300)
-
-    if(statusMap[0]+statusMap[3]+statusMap[6] == 3
-    || statusMap[1]+statusMap[4]+statusMap[7] == 3
-    || statusMap[2]+statusMap[5]+statusMap[8] == 3
-    || statusMap[0]+statusMap[1]+statusMap[2] == 3
-    || statusMap[3]+statusMap[4]+statusMap[5] == 3
-    || statusMap[6]+statusMap[7]+statusMap[8] == 3
-    || statusMap[0]+statusMap[4]+statusMap[8] == 3
-    || statusMap[2]+statusMap[4]+statusMap[6] == 3) {
-        gameOver(true)
+function evaluate(status: Status, firstMove: boolean): number {
+    if(firstMove && status == Status.FirstWin) {
+        return 10
+    }else if(firstMove && status == Status.SecondWin) {
+        return -10
+    }else if(!firstMove && status == Status.FirstWin) {
+        return -10
+    }else if(!firstMove && status == Status.SecondWin) {
+        return 10
+    }else{
+        return 0
     }
+}
 
-    if(statusMap[0]+statusMap[3]+statusMap[6] == 30
-    || statusMap[1]+statusMap[4]+statusMap[7] == 30
-    || statusMap[2]+statusMap[5]+statusMap[8] == 30
-    || statusMap[0]+statusMap[1]+statusMap[2] == 30
-    || statusMap[3]+statusMap[4]+statusMap[5] == 30
-    || statusMap[6]+statusMap[7]+statusMap[8] == 30
-    || statusMap[0]+statusMap[4]+statusMap[8] == 30
-    || statusMap[2]+statusMap[4]+statusMap[6] == 30) {
-        gameOver(false)
+function judge(map: number[]): Status{
+    if((map[0] == 1 && map[3] == 1 && map[6] == 1)
+    || (map[1] == 1 && map[4] == 1 && map[7] == 1)
+    || (map[2] == 1 && map[5] == 1 && map[8] == 1)
+    || (map[0] == 1 && map[1] == 1 && map[2] == 1)
+    || (map[3] == 1 && map[4] == 1 && map[5] == 1)
+    || (map[6] == 1 && map[7] == 1 && map[8] == 1)
+    || (map[0] == 1 && map[4] == 1 && map[8] == 1)
+    || (map[2] == 1 && map[4] == 1 && map[6] == 1)) {
+        return Status.FirstWin
+    }else if((map[0] == 2 && map[3] == 2 && map[6] == 2)
+    || (map[1] == 2 && map[4] == 2 && map[7] == 2)
+    || (map[2] == 2 && map[5] == 2 && map[8] == 2)
+    || (map[0] == 2 && map[1] == 2 && map[2] == 2)
+    || (map[3] == 2 && map[4] == 2 && map[5] == 2)
+    || (map[6] == 2 && map[7] == 2 && map[8] == 2)
+    || (map[0] == 2 && map[4] == 2 && map[8] == 2)
+    || (map[2] == 2 && map[4] == 2 && map[6] == 2)) {
+        return Status.SecondWin
+    }else if(!map.some(o => o == 0)){
+        return Status.Draw
+    }else {
+        return Status.InAMatch
     }
 }
 
