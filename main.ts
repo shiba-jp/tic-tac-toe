@@ -42,105 +42,187 @@ function playerTurn() {
     moveSprite(mySprite, curosrPlaceNo)
     statusMap[curosrPlaceNo] = isPlayerFirst ? 1 : 2
 
-    console.log(statusMap)
-
-    cpuTurn()
+    pause(300)
+    let status = judge(statusMap)
+    if(Status.InAMatch == status) {
+        cpuTurn()
+    }else if(Status.FirstWin == status) {
+        game.showLongText(isPlayerFirst ? "Player Win" : "CPU Win", DialogLayout.Bottom)
+        game.reset()
+    }else if(Status.SecondWin == status) {
+        game.showLongText(!isPlayerFirst ? "Player Win" : "CPU Win", DialogLayout.Bottom)
+        game.reset()
+    }else {
+        //Draw
+        game.showLongText("Draw", DialogLayout.Bottom)
+        game.reset()
+    }
 }
 
 function cpuTurn() {
     currentScene = GameScene.CpuTurn
 
-    let pos: number = negaMaxNextAction(!isPlayerFirst)
+    let pos: number = negaMaxNextAction(statusMap, true)
 
     let mySprite = sprites.create(!isPlayerFirst ? assets.image`batsu` : assets.image`maru`)
     moveCpuSprite(mySprite, pos)
     statusMap[pos] = isPlayerFirst ? 2 : 1
 
     currentScene = GameScene.PlayerTurn
+    
+    pause(300)
+    let status = judge(statusMap)
+    if(Status.InAMatch == status) {
+        //
+    }else if(Status.FirstWin == status) {
+        game.showLongText(isPlayerFirst ? "Player Win" : "CPU Win", DialogLayout.Bottom)
+        game.reset()
+    }else if(Status.SecondWin == status) {
+        game.showLongText(!isPlayerFirst ? "Player Win" : "CPU Win", DialogLayout.Bottom)
+        game.reset()
+    }else {
+        //Draw
+        game.showLongText("Draw", DialogLayout.Bottom)
+        game.reset()
+    }
 }
+
 
 function negaMax(workMap: number[], firstMove: boolean): number {
     let status: Status = judge(workMap)
     if(status != Status.InAMatch) {
-        return evaluate(status, firstMove)
+        console.logValue(status, workMap)
+        return evaluate(status)
     }
 
     let bestScore: number = -99
 
-    for(let i = 0; i < workMap.length; i++) {
-        if(workMap[i] != 0) continue
-        workMap[i] = firstMove ? 1 : 2
-
-        let score = -negaMax(workMap, !firstMove)
-
-        if(score > bestScore) {
-            bestScore = score
-        }
-    }
-
-    return bestScore
-}
-
-function negaMaxNextAction(firstMove: boolean): number {
-    let bestScore: number = -99
-    let bestAction: number = -99
-
-    for(let i = 0; i < statusMap.length; i++) {
-        if(statusMap[i] != 0) continue
-
-        let workMap = statusMap.slice(0, statusMap.length - 1)
-        workMap[i] = firstMove ? 1 : 2
-
-        let score = -negaMax(workMap, !firstMove)
-
-        if(score > bestScore) {
-            bestAction = i
-            bestScore = score
-        }
-    }
-
-    return bestAction
-}
-
-function minMax(workMap: number[], firstMove: boolean) {
-    let status: Status = judge(workMap)
-    if(status != Status.InAMatch) {
-        return evaluate(status, firstMove)
-    }else {
+    if(isPlayerFirst && !firstMove || !isPlayerFirst && firstMove ) {
         let max: number = -99
+
+        for(let i = 0; i < workMap.length; i++) {
+            if(workMap[i] != 0) continue
+            workMap[i] = firstMove ? 1 : 2
+
+            let score = negaMax(workMap, !firstMove)
+            if(score > max) max = score
+        }
+
+        return max
+    }else{
         let min: number = 99
 
         for(let i = 0; i < workMap.length; i++) {
             if(workMap[i] != 0) continue
             workMap[i] = firstMove ? 1 : 2
 
-            let score = minMax(workMap, !firstMove)
-
-            if(firstMove) {
-                if(score > max) max = score
-            }else{
-                if(score < min) min = score
-            }
+            let score = negaMax(workMap, !firstMove)
+            if(min < score) min = score
         }
 
-        return firstMove ? max : min
+        return min
+    }
+    /**
+    for(let i = 0; i < workMap.length; i++) {
+        if(workMap[i] != 0) continue
+        workMap[i] = firstMove ? 1 : 2
+
+        let score = negaMax(workMap, !firstMove)
+
+        if(firstMove == !isPlayerFirst || !firstMove == isPlayerFirst) {
+
+        }else{
+
+        }
+
+        if(score > bestScore) {
+            bestScore = score
+        }
+    }
+    return bestScore
+     */
+}
+
+function minMax(workMap: number[], flg: boolean): number {
+    let status: Status = judge(workMap)
+    if(status != Status.InAMatch) {
+        console.logValue(status, workMap)
+        return evaluate(status)
+    }else{
+        let value: number
+        let child: number
+
+        if(flg) {
+            value = -99
+        }else{
+            value = 99
+        }
+
+        for(let i = 0; i < workMap.length; i++) {
+            if(workMap[i] != 0) continue
+
+            if(flg && isPlayerFirst) workMap[i] = 2
+            if(flg && !isPlayerFirst) workMap[i] = 1
+            if(!flg && isPlayerFirst) workMap[i] = 1
+            if(!flg && !isPlayerFirst) workMap[i] = 2
+
+            child = minMax(workMap, !flg)
+
+            if(flg) {
+                if(child >= value) value = child
+            }else {
+                if(child <= value) value = child
+            }
+        }
+        return value
     }
 }
 
+function negaMaxNextAction(rootMap: number[], flg: boolean): number {
+    let scoreList: number[] = []
+    let actionList: number[] = []
+
+    for(let i = 0; i < rootMap.length; i++) {
+        if(rootMap[i] != 0) continue
+
+        let workMap = rootMap.slice(0, rootMap.length)
+        workMap[i] = isPlayerFirst ? 2 : 1
+
+        let score: number = minMax(workMap, !flg)
+
+        scoreList.push(score)
+        actionList.push(i)
+
+        if(score >= 0) break
+    }
+
+    let actionIndex: number
+    for(let i = 0; i < scoreList.length; i++) {
+        if(scoreList[i] > 0) {
+            actionIndex = i
+            break
+        }
+    }
+
+    return actionList[actionIndex]
+}
+
 function gameOver(win: boolean) {
+
     game.over(win)
 }
 
-function evaluate(status: Status, firstMove: boolean): number {
-    if(firstMove && status == Status.FirstWin) {
-        return 1
-    }else if(firstMove && status == Status.SecondWin) {
+function evaluate(status: Status): number {
+    if(isPlayerFirst && status == Status.FirstWin
+     || !isPlayerFirst && status == Status.SecondWin) {
+        console.logValue("CPU Eval", -1)
         return -1
-    }else if(!firstMove && status == Status.FirstWin) {
-        return -1
-    }else if(!firstMove && status == Status.SecondWin) {
+    }else if(isPlayerFirst && status == Status.SecondWin
+     || !isPlayerFirst && status == Status.FirstWin) {
+        console.logValue("CPU Eval", 1)
         return 1
     }else{
+        console.logValue("CPU Eval", 0)
         return 0
     }
 }
